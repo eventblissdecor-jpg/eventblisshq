@@ -1258,6 +1258,10 @@ function notify(text: string) {
               <button
                 key={item.name}
                 onClick={() => {
+                  if (item.name === "Quotations & Invoices") {
+                    window.location.href = "/documents";
+                    return;
+                  }
                   setActivePage(item.name);
                   setMessage("");
                   setError("");
@@ -1297,7 +1301,13 @@ function notify(text: string) {
               <select
                 className={fieldClass}
                 value={activePage}
-                onChange={(event) => setActivePage(event.target.value)}
+                onChange={(event) => {
+                  if (event.target.value === "Quotations & Invoices") {
+                    window.location.href = "/documents";
+                    return;
+                  }
+                  setActivePage(event.target.value);
+                }}
               >
                 {navigation.map((item) => (
                   <option key={item.name} value={item.name}>
