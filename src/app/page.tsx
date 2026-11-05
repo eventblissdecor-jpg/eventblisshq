@@ -63,6 +63,34 @@ type OperationsAlert = {
   action: string;
 };
 
+type WorkspaceSettings = {
+  id: string;
+  workspace_name: string;
+  business_name: string;
+  email: string;
+  phone: string;
+  location: string;
+  website: string;
+  logo_url: string;
+  primary_color: string;
+  accent_color: string;
+  document_footer: string;
+};
+
+const defaultWorkspaceSettings: WorkspaceSettings = {
+  id: "eventbliss",
+  workspace_name: "EventBliss AI HQ",
+  business_name: "EventBliss",
+  email: "eventblissdecor@gmail.com",
+  phone: "",
+  location: "Kamloops, British Columbia, Canada",
+  website: "https://eventbliss.ca",
+  logo_url: "https://eventbliss.ca/assets/eventbliss-logo.png",
+  primary_color: "#2C2053",
+  accent_color: "#C39C49",
+  document_footer: "",
+};
+
 const navigation = [
   { name: "Overview", icon: "⌂" },
   { name: "AI Operations Director", icon: "✧" },
@@ -214,6 +242,8 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [posts, setPosts] = useState<MarketingPost[]>([]);
   const [approvalRecords, setApprovalRecords] = useState<ApprovalRecord[]>([]);
+  const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(defaultWorkspaceSettings);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -301,6 +331,66 @@ function notify(text: string) {
   useEffect(() => {
     loadAllData();
   }, []);
+
+  async function loadWorkspaceSettings() {
+    setSettingsLoading(true);
+    const { data, error: settingsError } = await supabase
+      .from("workspace_settings")
+      .select("*")
+      .eq("id", "eventbliss")
+      .maybeSingle();
+
+    if (settingsError) {
+      reportError(settingsError.message);
+    } else if (data) {
+      setWorkspaceSettings({
+        ...defaultWorkspaceSettings,
+        ...data,
+        email: data.email ?? "",
+        phone: data.phone ?? "",
+        document_footer: data.document_footer ?? "",
+      });
+    }
+    setSettingsLoading(false);
+  }
+
+  useEffect(() => {
+    loadWorkspaceSettings();
+  }, []);
+
+  async function saveWorkspaceSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+
+    const values = {
+      id: "eventbliss",
+      workspace_name: workspaceSettings.workspace_name.trim(),
+      business_name: workspaceSettings.business_name.trim(),
+      email: workspaceSettings.email.trim() || null,
+      phone: workspaceSettings.phone.trim() || null,
+      location: workspaceSettings.location.trim() || null,
+      website: workspaceSettings.website.trim() || null,
+      logo_url: workspaceSettings.logo_url.trim() || null,
+      primary_color: workspaceSettings.primary_color,
+      accent_color: workspaceSettings.accent_color,
+      document_footer: workspaceSettings.document_footer.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: saveError } = await supabase
+      .from("workspace_settings")
+      .upsert(values, { onConflict: "id" });
+
+    setSaving(false);
+
+    if (saveError) {
+      reportError(saveError.message);
+      return;
+    }
+
+    notify("Workspace settings saved successfully.");
+    await loadWorkspaceSettings();
+  }
 
   // CLIENT MANAGEMENT
 
@@ -2458,28 +2548,95 @@ function notify(text: string) {
                 <>
                   <SectionHeading
                     title="Settings"
-                    description="EventBliss AI HQ workspace information."
+                    description="Manage the identity and business information for your private EventBliss AI HQ workspace."
                   />
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
-                    <h3 className="font-semibold text-[#2C2053]">Company branding</h3>
-                    <div className="mt-5 flex flex-wrap gap-5">
-                      <div>
-                        <div className="h-14 w-14 rounded-xl bg-[#2C2053]" />
-                        <p className="mt-2 text-xs text-gray-500">Royal Purple</p>
-                        <p className="text-xs font-semibold">#2C2053</p>
+
+                  {settingsLoading ? (
+                    <div className="rounded-2xl bg-white p-8 text-sm text-gray-500 shadow-sm">Loading workspace settings…</div>
+                  ) : (
+                    <form onSubmit={saveWorkspaceSettings} className="space-y-6">
+                      <section className="rounded-2xl bg-white p-6 shadow-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-[#2C2053]">Workspace identity</h3>
+                            <p className="mt-1 text-sm text-gray-500">The name and identity displayed inside your private dashboard.</p>
+                          </div>
+                          <span className="rounded-full bg-[#F7F5FA] px-3 py-1 text-xs font-semibold text-[#2C2053]">Private workspace</span>
+                        </div>
+                        <div className="mt-5 grid gap-4 md:grid-cols-2">
+                          <label className="block text-sm font-medium text-gray-700">Workspace name
+                            <input required className={fieldClass + " mt-2"} value={workspaceSettings.workspace_name} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, workspace_name: e.target.value }))} />
+                          </label>
+                          <label className="block text-sm font-medium text-gray-700">Business name
+                            <input required className={fieldClass + " mt-2"} value={workspaceSettings.business_name} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, business_name: e.target.value }))} />
+                          </label>
+                        </div>
+                      </section>
+
+                      <section className="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-[#2C2053]">Business contact information</h3>
+                        <p className="mt-1 text-sm text-gray-500">These details can be used in your business documents and workspace.</p>
+                        <div className="mt-5 grid gap-4 md:grid-cols-2">
+                          <label className="block text-sm font-medium text-gray-700">Business email
+                            <input type="email" className={fieldClass + " mt-2"} value={workspaceSettings.email} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, email: e.target.value }))} placeholder="hello@example.com" />
+                          </label>
+                          <label className="block text-sm font-medium text-gray-700">Business phone
+                            <input type="tel" className={fieldClass + " mt-2"} value={workspaceSettings.phone} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, phone: e.target.value }))} placeholder="Enter business phone" />
+                          </label>
+                          <label className="block text-sm font-medium text-gray-700 md:col-span-2">Business location
+                            <input className={fieldClass + " mt-2"} value={workspaceSettings.location} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, location: e.target.value }))} />
+                          </label>
+                          <label className="block text-sm font-medium text-gray-700 md:col-span-2">Website
+                            <input type="url" className={fieldClass + " mt-2"} value={workspaceSettings.website} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, website: e.target.value }))} />
+                          </label>
+                        </div>
+                      </section>
+
+                      <section className="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-[#2C2053]">Logo and brand identity</h3>
+                        <p className="mt-1 text-sm text-gray-500">Use your EventBliss logo URL and the official brand colours.</p>
+                        <div className="mt-5 flex flex-wrap items-center gap-5 rounded-xl border border-gray-100 p-4">
+                          <div className="flex h-24 w-40 items-center justify-center rounded-lg bg-[#FBF9F3] p-3">
+                            {workspaceSettings.logo_url ? <img src={workspaceSettings.logo_url} alt="EventBliss logo preview" className="max-h-full max-w-full object-contain" /> : <span className="text-sm text-gray-400">Logo preview</span>}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <label className="block text-sm font-medium text-gray-700">Logo image URL
+                              <input type="url" className={fieldClass + " mt-2"} value={workspaceSettings.logo_url} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, logo_url: e.target.value }))} />
+                            </label>
+                          </div>
+                        </div>
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                          <label className="block text-sm font-medium text-gray-700">Royal purple
+                            <div className="mt-2 flex items-center gap-3">
+                              <input type="color" className="h-11 w-16 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" value={workspaceSettings.primary_color} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, primary_color: e.target.value }))} />
+                              <input className={fieldClass} value={workspaceSettings.primary_color} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, primary_color: e.target.value }))} pattern="^#[0-9A-Fa-f]{6}$" />
+                            </div>
+                          </label>
+                          <label className="block text-sm font-medium text-gray-700">Luxury gold
+                            <div className="mt-2 flex items-center gap-3">
+                              <input type="color" className="h-11 w-16 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" value={workspaceSettings.accent_color} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, accent_color: e.target.value }))} />
+                              <input className={fieldClass} value={workspaceSettings.accent_color} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, accent_color: e.target.value }))} pattern="^#[0-9A-Fa-f]{6}$" />
+                            </div>
+                          </label>
+                        </div>
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <div className="rounded-xl border border-gray-100 p-3"><div className="h-10 w-20 rounded-lg" style={{ backgroundColor: workspaceSettings.primary_color }} /><p className="mt-2 text-xs text-gray-500">Purple · {workspaceSettings.primary_color}</p></div>
+                          <div className="rounded-xl border border-gray-100 p-3"><div className="h-10 w-20 rounded-lg" style={{ backgroundColor: workspaceSettings.accent_color }} /><p className="mt-2 text-xs text-gray-500">Gold · {workspaceSettings.accent_color}</p></div>
+                        </div>
+                      </section>
+
+                      <section className="rounded-2xl bg-white p-6 shadow-sm">
+                        <h3 className="text-lg font-semibold text-[#2C2053]">Quotation and invoice footer</h3>
+                        <p className="mt-1 text-sm text-gray-500">Optional text to include on future client documents. This does not send documents automatically.</p>
+                        <textarea rows={3} className={fieldClass + " mt-4"} value={workspaceSettings.document_footer} onChange={(e) => setWorkspaceSettings((p) => ({ ...p, document_footer: e.target.value }))} placeholder="Thank you for choosing EventBliss." />
+                      </section>
+
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <p className="text-xs text-gray-500">Changes are saved securely to your Supabase workspace.</p>
+                        <button type="submit" disabled={saving} className={primaryButton}>{saving ? "Saving settings…" : "Save Workspace Settings"}</button>
                       </div>
-                      <div>
-                        <div className="h-14 w-14 rounded-xl bg-[#C39C49]" />
-                        <p className="mt-2 text-xs text-gray-500">Luxury Gold</p>
-                        <p className="text-xs font-semibold">#C39C49</p>
-                      </div>
-                    </div>
-                    <div className="mt-7 border-t border-gray-100 pt-5">
-                      <p className="font-semibold text-[#2C2053]">EventBliss Company</p>
-                      <p className="mt-1 text-sm text-gray-500">Kamloops, British Columbia</p>
-                      <p className="mt-1 text-sm text-gray-500">eventbliss.ca</p>
-                    </div>
-                  </div>
+                    </form>
+                  )}
                 </>
               )}
             </>
