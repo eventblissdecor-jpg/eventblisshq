@@ -38,7 +38,7 @@ export default function DocumentsPage() {
   const [kind, setKind] = useState<"quotation" | "invoice">("quotation");
   const [clientId, setClientId] = useState("");
   const [eventId, setEventId] = useState("");
-  const [issueDate, setIssueDate] = useState(today);
+  const [issueDate, setIssueDate] = useState("2000-01-01");
   const [dueDate, setDueDate] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [taxRate, setTaxRate] = useState("0");
@@ -59,7 +59,7 @@ export default function DocumentsPage() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { setIssueDate(today()); load(); }, []);
 
   const client = clients.find((c) => c.id === clientId);
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Math.max(0, Number(item.quantity) || 0) * Math.max(0, Number(item.unit_price) || 0), 0), [items]);
