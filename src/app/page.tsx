@@ -71,6 +71,7 @@ const navigation = [
   { name: "Content Calendar", icon: "▦" },
   { name: "Approval Centre", icon: "✓" },
   { name: "Publishing Queue", icon: "↗" },
+  { name: "Quotations & Invoices", icon: "▤" },
   { name: "Settings", icon: "⚙" },
 ];
 
