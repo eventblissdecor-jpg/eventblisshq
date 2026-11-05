@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const EVENTBLISS_LOGO = "https://eventbliss.ca/assets/eventbliss-logo.png";
@@ -11,6 +11,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -129,7 +134,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-8 text-center text-xs text-gray-400">
-          © {new Date().getFullYear()} EventBliss · Private Internal System
+          © {year ?? ""} EventBliss · Private Internal System
         </p>
       </div>
     </main>
