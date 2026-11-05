@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 type Client = { id: string; full_name: string; email: string | null; phone: string | null; company: string | null };
 type EventRecord = { id: string; event_name: string; client_id: string | null; event_date: string | null; venue: string | null };
 type Item = { description: string; quantity: number; unit_price: number };
-type Business = { name: string; email: string; phone: string; location: string; website: string; logo_url: string };
+type Business = { name: string; email: string; phone: string; location: string; website: string; logo_url: string; document_footer: string };
 type Doc = {
   id: string; document_number: string; document_type: "quotation" | "invoice";
   client_id: string | null; event_id: string | null;
@@ -18,7 +18,7 @@ type Doc = {
 };
 
 const LOGO = "https://eventbliss.ca/assets/eventbliss-logo.png";
-const defaultBusiness: Business = { name: "EventBliss", email: "eventblissdecor@gmail.com", phone: "", location: "Kamloops, British Columbia, Canada", website: "https://eventbliss.ca", logo_url: LOGO };
+const defaultBusiness: Business = { name: "EventBliss", email: "eventblissdecor@gmail.com", phone: "", location: "Kamloops, British Columbia, Canada", website: "https://eventbliss.ca", logo_url: LOGO, document_footer: "" };
 const field = "w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-[#C39C49]";
 const primary = "rounded-xl bg-[#2C2053] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#40316f] disabled:opacity-50";
 const secondary = "rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:border-[#C39C49]";
@@ -48,14 +48,25 @@ export default function DocumentsPage() {
 
   async function load() {
     setLoading(true);
-    const [c, e, d] = await Promise.all([
+    const [c, e, d, settings] = await Promise.all([
       supabase.from("clients").select("id,full_name,email,phone,company").order("full_name"),
       supabase.from("events").select("id,event_name,client_id,event_date,venue").order("event_date", { ascending: false }),
       supabase.from("event_documents").select("*").order("created_at", { ascending: false }),
+      supabase.from("workspace_settings").select("business_name,email,phone,location,website,logo_url,document_footer").eq("id", "eventbliss").maybeSingle(),
     ]);
     if (c.error) setError(c.error.message); else setClients((c.data || []) as Client[]);
     if (e.error) setError(e.error.message); else setEvents((e.data || []) as EventRecord[]);
     if (d.error) setError(d.error.message); else setDocs((d.data || []) as Doc[]);
+    if (settings.error) setError(settings.error.message);
+    else if (settings.data) setBusiness({
+      name: settings.data.business_name || defaultBusiness.name,
+      email: settings.data.email || defaultBusiness.email,
+      phone: settings.data.phone || "",
+      location: settings.data.location || defaultBusiness.location,
+      website: settings.data.website || defaultBusiness.website,
+      logo_url: settings.data.logo_url || LOGO,
+      document_footer: settings.data.document_footer || "",
+    });
     setLoading(false);
   }
 
@@ -141,7 +152,7 @@ export default function DocumentsPage() {
       "<div class='totals'><div><span>Subtotal</span><b>" + money(Number(doc.subtotal)) + "</b></div><div><span>Tax (" + Number(doc.tax_rate).toFixed(2) + "%)</span><b>" + money(Number(doc.tax_amount)) + "</b></div><div class='grand'><span>Total CAD</span><b>" + money(Number(doc.total)) + "</b></div>" +
       (doc.document_type === "invoice" ? "<div><span>Paid</span><b>" + money(Number(doc.amount_paid)) + "</b></div><div><span>Balance due</span><b>" + money(Math.max(0, Number(doc.total) - Number(doc.amount_paid))) + "</b></div>" : "") + "</div>" +
       (doc.notes ? "<div class='notes'><b>Notes & payment instructions</b><br>" + escapeHtml(doc.notes) + "</div>" : "") +
-      "<div class='footer'>Thank you for considering EventBliss. We look forward to making your event beautiful.<br><b>eventbliss.ca · Kamloops, British Columbia</b></div>" +
+      "<div class='footer'>" + (businessInfo.document_footer ? escapeHtml(businessInfo.document_footer) + "<br>" : "Thank you for considering EventBliss. We look forward to making your event beautiful.<br>") + "<b>eventbliss.ca · Kamloops, British Columbia</b></div>" +
       "<script>window.onload=function(){window.print();}</script></body></html>";
     const popup = window.open("", "_blank", "width=900,height=700");
     if (!popup) { setError("Your browser blocked the print window. Allow pop-ups for this site and try again."); return; }
@@ -155,7 +166,7 @@ export default function DocumentsPage() {
     <div className="min-h-screen bg-[#F7F5FA] text-gray-800">
       <header className="border-b border-[#C39C49]/30 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
-          <div className="flex items-center gap-3"><img src={LOGO} alt="EventBliss logo" className="h-14 w-20 object-contain" /><div><p className="font-semibold text-[#2C2053]">Quotation & Invoice Manager</p><p className="text-xs text-gray-500">EventBliss AI HQ · Purple & Gold</p></div></div>
+          <div className="flex items-center gap-3"><img src={LOGO} alt="EventBliss logo" className="h-14 w-20 object-contain" /><div><p className="font-semibold text-[#2C2053]">Quotation & Invoice Manager</p><p className="text-xs text-gray-500">EventBliss AI · Purple & Gold</p></div></div>
           <Link href="/" className={secondary}>← Back to Dashboard</Link>
         </div>
       </header>
