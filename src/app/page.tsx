@@ -79,7 +79,7 @@ type WorkspaceSettings = {
 
 const defaultWorkspaceSettings: WorkspaceSettings = {
   id: "eventbliss",
-  workspace_name: "EventBliss AI HQ",
+  workspace_name: "EventBliss AI",
   business_name: "EventBliss",
   email: "eventblissdecor@gmail.com",
   phone: "",
@@ -346,6 +346,10 @@ function notify(text: string) {
       setWorkspaceSettings({
         ...defaultWorkspaceSettings,
         ...data,
+        workspace_name:
+          data.workspace_name === "EventBliss AI HQ"
+            ? "EventBliss AI"
+            : data.workspace_name,
         email: data.email ?? "",
         phone: data.phone ?? "",
         document_footer: data.document_footer ?? "",
@@ -1334,13 +1338,23 @@ function notify(text: string) {
     <div className="min-h-screen bg-[#F7F5FA] text-gray-800">
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 flex-col bg-[#2C2053] px-5 py-7 text-white md:flex">
-          <div className="mb-10">
-            <h1 className="font-serif text-2xl font-bold tracking-wide">
-              EventBliss
-            </h1>
-            <p className="mt-1 text-xs tracking-[0.2em] text-[#C39C49]">
-              AI HEADQUARTERS
-            </p>
+          <div className="mb-10 flex items-center gap-3">
+            <img
+              src={workspaceSettings.logo_url || defaultWorkspaceSettings.logo_url}
+              alt="EventBliss logo"
+              className="h-12 w-12 rounded-lg bg-white object-contain p-1"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+            <div>
+              <h1 className="font-serif text-2xl font-bold tracking-wide">
+                EventBliss AI
+              </h1>
+              <p className="mt-1 text-xs tracking-[0.2em] text-[#C39C49]">
+                BUSINESS HUB
+              </p>
+            </div>
           </div>
 
           <nav className="space-y-2">
@@ -1369,7 +1383,7 @@ function notify(text: string) {
           </nav>
 
           <div className="mt-auto rounded-xl border border-white/15 bg-white/5 p-4">
-            <p className="text-sm font-semibold">EventBliss AI HQ</p>
+            <p className="text-sm font-semibold">EventBliss AI</p>
             <p className="mt-1 text-xs text-white/60">
               Your private event management workspace.
             </p>
@@ -1379,9 +1393,19 @@ function notify(text: string) {
         <main className="min-w-0 flex-1 p-4 sm:p-7 lg:p-10">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C39C49]">
-                EventBliss Company
-              </p>
+              <div className="mb-1 flex items-center gap-2">
+                <img
+                  src={workspaceSettings.logo_url || defaultWorkspaceSettings.logo_url}
+                  alt="EventBliss logo"
+                  className="h-7 w-7 rounded bg-white object-contain p-0.5"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                />
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C39C49]">
+                  EventBliss AI
+                </p>
+              </div>
               <h1 className="mt-1 text-2xl font-bold text-[#2C2053]">
                 {activePage}
               </h1>
