@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type CampaignPost = {
@@ -77,8 +77,9 @@ function formatDate(dateString: string) {
 }
 
 export default function MarketingManagerPage() {
-  const [weekStart, setWeekStart] = useState(getNextMonday);
+  const [weekStart, setWeekStart] = useState("");
   const [campaignDetail, setCampaignDetail] = useState("");
+
   const [platforms, setPlatforms] = useState([
     "Instagram",
     "Facebook",
@@ -89,6 +90,11 @@ export default function MarketingManagerPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  // Set the default campaign week after the page loads.
+  useEffect(() => {
+    setWeekStart(getNextMonday());
+  }, []);
 
   function togglePlatform(platform: string) {
     setPlatforms((previous) =>

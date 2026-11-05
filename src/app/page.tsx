@@ -233,15 +233,37 @@ export default function DashboardPage() {
   const [generatorDetail, setGeneratorDetail] = useState("");
   const [designOpen, setDesignOpen] = useState(true);
 
-  const [calendarMonth, setCalendarMonth] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const [currentTime, setCurrentTime] = useState<Date>(
+  () => new Date(2000, 0, 1)
+);
+
+const [calendarMonth, setCalendarMonth] = useState<Date>(
+  () => new Date(2000, 0, 1)
+);
+
+useEffect(() => {
+  const now = new Date();
+
+  setCurrentTime(now);
+
+  setCalendarMonth(
+    new Date(now.getFullYear(), now.getMonth(), 1)
   );
+}, []);
 
-  const designRef = useRef<HTMLDivElement>(null);
+useEffect(() => {
+  const now = new Date();
 
-  function notify(text: string) {
-    setMessage(text);
-    setError("");
+  setCalendarMonth(
+    new Date(now.getFullYear(), now.getMonth(), 1)
+  );
+}, []);
+
+const designRef = useRef<HTMLDivElement>(null);
+
+function notify(text: string) {
+  setMessage(text);
+  setError("");
   }
 
   function reportError(text: string) {
@@ -843,7 +865,11 @@ export default function DashboardPage() {
 
   // AI OPERATIONS DIRECTOR - AUTOMATED BUSINESS INSIGHTS
 
-  const today = new Date();
+  const today = new Date(
+  currentTime.getFullYear(),
+  currentTime.getMonth(),
+  currentTime.getDate()
+);
   today.setHours(0, 0, 0, 0);
 
   const next30Days = new Date(today);
@@ -903,7 +929,7 @@ export default function DashboardPage() {
 
     return (
       post.status === "scheduled" &&
-      new Date(post.scheduled_at).getTime() < Date.now()
+      new Date(post.scheduled_at).getTime() < currentTime.getTime()
     );
   });
 
@@ -1901,7 +1927,13 @@ export default function DashboardPage() {
                         </p>
 
                         <h3 className="mt-2 text-2xl font-bold">
-                          Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}!
+                          Good {
+  currentTime.getHours() < 12
+    ? "morning"
+    : currentTime.getHours() < 17
+      ? "afternoon"
+      : "evening"
+}!
                         </h3>
 
                         <p className="mt-2 text-sm text-white/70">
